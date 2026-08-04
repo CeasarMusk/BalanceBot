@@ -14,6 +14,11 @@
 #define SCL 22
 #define SDA 21
 
+#define FREQ 30000
+#define PWMCHANNEL 0
+#define RESOLUTION 8 
+#define DUTYCYCLE 200
+
 Adafruit_MPU6050 mpu;
 
 
@@ -105,7 +110,15 @@ void setup(void) {
 
   Serial.println("");
   delay(100);
+
+  ledcAttachChannel(PWMA,FREQ,RESOLUTION,PWMCHANNEL);
+  ledcAttachChannel(PWMB,FREQ,RESOLUTION,PWMCHANNEL);
+
+  delay(1000);
+
 }
+
+
 void loop() {
  
   sensors_event_t a, g, temp;
@@ -133,7 +146,10 @@ void loop() {
   Serial.println(" degC");
 
   Serial.println("");
-  delay(500);
+  delay(100);
+
+  digitalWrite(AIN2,HIGH);
+  digitalWrite(AIN1,LOW);
 
 
 
