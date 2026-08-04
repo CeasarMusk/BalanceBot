@@ -1,9 +1,18 @@
 #include <Wire.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
+#include <ElegantOTA.h>
+#include <WiFi.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+
+//trying to not end it all
+//Add ENV var's
 
 
-
+// ╔══════════════════════════════════════════════════════════╗
+// ║                  Init Pins                               ║
+// ╚══════════════════════════════════════════════════════════╝
 #define LED_BUILTIN 2
 #define PWMA 15
 #define AIN2 2
@@ -14,17 +23,26 @@
 #define SCL 22
 #define SDA 21
 
+// ╔══════════════════════════════════════════════════════════╗
+// ║                  Motor Shit                              ║
+// ╚══════════════════════════════════════════════════════════╝
 #define FREQ 30000
 #define PWMCHANNEL 0
 #define RESOLUTION 8 
 #define DUTYCYCLE 200
 
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║                  OTA Maybe?                              ║
+// ╚══════════════════════════════════════════════════════════╝
+#define ssid 
+
+
 Adafruit_MPU6050 mpu;
-
-
-
 void setup(void) {
-  
+// ╔══════════════════════════════════════════════════════════╗
+// ║                  Init Pins                               ║
+// ╚══════════════════════════════════════════════════════════╝
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(PWMB,OUTPUT);
   pinMode(PWMA,OUTPUT);
@@ -147,6 +165,7 @@ void loop() {
 
   Serial.println("");
   delay(100);
+  
 
   digitalWrite(AIN2,HIGH);
   digitalWrite(AIN1,LOW);

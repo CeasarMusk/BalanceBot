@@ -26,3 +26,9 @@ Parts:
 | ESP-WROOM-32 | [Amazon](https://www.amazon.com/dp/B08D5ZD528?th=1)  | $16x3 |
 | IMU | Item2.2 | Item3.2 |
 
+
+
+
+
+
+Mental Note: DO NOT FORGET TO CHANGE OTA LIB
