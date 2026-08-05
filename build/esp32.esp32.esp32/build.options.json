@@ -1,0 +1,9 @@
+{
+  "additionalFiles": "../..,../..,../..",
+  "compiler.optimization_flags": "-Os",
+  "customBuildProperties": "",
+  "fqbn": "esp32:esp32:esp32",
+  "hardwareFolders": "/home/ceasarmusk/.arduino15/packages/esp32/hardware/esp32/3.3.11,/home/ceasarmusk/.arduino15/packages/esp32/hardware/esp32/3.3.11",
+  "otherLibrariesFolders": "/home/ceasarmusk/Arduino/libraries",
+  "sketchLocation": "/home/ceasarmusk/Documents/Stuff/balancebot/balance"
+}

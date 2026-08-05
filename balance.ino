@@ -41,7 +41,7 @@
 #define FREQ 30000
 #define PWMCHANNEL 0
 #define RESOLUTION 8 
-#define DUTYCYCLE 200
+#define DUTYCYCLE 220
 
 
 
@@ -124,10 +124,10 @@ void setup(void) {
 
 void loop() {
   ElegantOTA.loop();
+  LOG_PRINTf("Everything was Sucessful!");
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
   
-  LOG_PRINTf("THIS IS A TEST");
   /* Print out the values */
  // Serial.print("Acceleration X: ");
  // Serial.print(a.acceleration.x);
@@ -155,7 +155,8 @@ void loop() {
 
   digitalWrite(AIN2,HIGH);
   digitalWrite(AIN1,LOW);
-
+  delay(10000);
+  
 
 
 
