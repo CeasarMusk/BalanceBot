@@ -5,14 +5,23 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <WebSerial.h>
 
 //Please remember to change the Macros in this file
 #include <secrets.h>
 
 //trying to not end it all
-//Add ENV var's
 
-
+#define LOG_PRINTf(x)   \
+    do {               \
+        Serial.printf(x);    \
+        WebSerial.printf(x); \
+    } while (0)
+#define LOG_PRINTLN(x) \
+    do {               \
+        Serial.println(x);    \
+        WebSerial.println(x); \
+    } while (0)
 // ╔══════════════════════════════════════════════════════════╗
 // ║                  Init Pins                               ║
 // ╚══════════════════════════════════════════════════════════╝
@@ -55,7 +64,8 @@ void setup(void) {
   Serial.begin(115200);
   while (!Serial)
     delay(10); // will pause Zero, Leonardo, etc until serial console opens
-  delay(2500); // This is needed during Programming phase, the serial connection will output tons of garbage without it
+  LOG_PRINTf("ESP32 Booting up\n");
+  delay(5000); // This is needed during Programming phase, the serial connection will output tons of garbage without it
 
 // ╔══════════════════════════════════════════════════════════╗
 // ║                  OTA Maybe?                              ║
@@ -63,42 +73,45 @@ void setup(void) {
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(SSID,WIFI_PASSWORD);
-  Serial.printf("Testing WiFi\n");
+  LOG_PRINTf("Testing WiFi\n");
 
   while(WiFi.status() != WL_CONNECTED){
     delay(500);
-    Serial.printf(".");
+    LOG_PRINTf(".");
   }
-  Serial.printf("\nConnected to %s \n IP Address: %s\n", SSID,WiFi.localIP().toString().c_str());
+  Serial.printf("\nConnected to %s\n IP Address: %s\n", SSID,WiFi.localIP().toString().c_str());
+  WebSerial.printf("\nConnected to %s\n IP Address: %s\n", SSID,WiFi.localIP().toString().c_str());
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", "Hi! I am ESP32.");
   });
 
   server.begin();
-  Serial.println("HTTP server started");
+  LOG_PRINTLN("HTTP server started");
 
   ElegantOTA.begin(&server);    // Start ElegantOTA
+  WebSerial.begin(&server);
+  
 
 // ╔══════════════════════════════════════════════════════════╗
 // ║                  MPU Init                                ║
 // ╚══════════════════════════════════════════════════════════╝
-  Serial.println("Adafruit MPU6050 test!");
+  LOG_PRINTLN("Adafruit MPU6050 test!");
 
   // Try to initialize!
   if (!mpu.begin()) {
-    Serial.println("Failed to find MPU6050 chip");
+    LOG_PRINTLN("Failed to find MPU6050 chip");
     while (1) {
       delay(10);
     }
   }
-  Serial.println("MPU6050 Found!");
+  LOG_PRINTLN("MPU6050 Found!");
 
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
 
 
-  Serial.println("");
+  LOG_PRINTLN("");
   delay(100);
 
   ledcAttachChannel(PWMA,FREQ,RESOLUTION,PWMCHANNEL);
@@ -113,7 +126,8 @@ void loop() {
   ElegantOTA.loop();
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
-
+  
+  LOG_PRINTf("THIS IS A TEST");
   /* Print out the values */
  // Serial.print("Acceleration X: ");
  // Serial.print(a.acceleration.x);
@@ -121,7 +135,7 @@ void loop() {
  // Serial.print(a.acceleration.y);
  // Serial.print(", Z: ");
  // Serial.print(a.acceleration.z);
- // Serial.println(" m/s^2");
+ // LOG_PRINTLN(" m/s^2");
 
  // Serial.print("Rotation X: ");
  // Serial.print(g.gyro.x);
@@ -129,13 +143,13 @@ void loop() {
  // Serial.print(g.gyro.y);
  // Serial.print(", Z: ");
  // Serial.print(g.gyro.z);
- // Serial.println(" rad/s");
+ // LOG_PRINTLN(" rad/s");
 
  // Serial.print("Temperature: ");
  // Serial.print(temp.temperature);
- // Serial.println(" degC");
+ // LOG_PRINTLN(" degC");
 
- // Serial.println("");
+ // LOG_PRINTLN("");
   delay(100);
   
 
