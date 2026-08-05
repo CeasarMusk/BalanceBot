@@ -69,7 +69,7 @@ void setup(void) {
     delay(500);
     Serial.printf(".");
   }
-  Serial.printf("Connected to %s \n IP Address: %s", SSID,WiFi.localIP().toString().c_str());
+  Serial.printf("\nConnected to %s \n IP Address: %s\n", SSID,WiFi.localIP().toString().c_str());
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", "Hi! I am ESP32.");
   });
@@ -110,32 +110,32 @@ void setup(void) {
 
 
 void loop() {
- 
+  ElegantOTA.loop();
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
   /* Print out the values */
-  Serial.print("Acceleration X: ");
-  Serial.print(a.acceleration.x);
-  Serial.print(", Y: ");
-  Serial.print(a.acceleration.y);
-  Serial.print(", Z: ");
-  Serial.print(a.acceleration.z);
-  Serial.println(" m/s^2");
+ // Serial.print("Acceleration X: ");
+ // Serial.print(a.acceleration.x);
+ // Serial.print(", Y: ");
+ // Serial.print(a.acceleration.y);
+ // Serial.print(", Z: ");
+ // Serial.print(a.acceleration.z);
+ // Serial.println(" m/s^2");
 
-  Serial.print("Rotation X: ");
-  Serial.print(g.gyro.x);
-  Serial.print(", Y: ");
-  Serial.print(g.gyro.y);
-  Serial.print(", Z: ");
-  Serial.print(g.gyro.z);
-  Serial.println(" rad/s");
+ // Serial.print("Rotation X: ");
+ // Serial.print(g.gyro.x);
+ // Serial.print(", Y: ");
+ // Serial.print(g.gyro.y);
+ // Serial.print(", Z: ");
+ // Serial.print(g.gyro.z);
+ // Serial.println(" rad/s");
 
-  Serial.print("Temperature: ");
-  Serial.print(temp.temperature);
-  Serial.println(" degC");
+ // Serial.print("Temperature: ");
+ // Serial.print(temp.temperature);
+ // Serial.println(" degC");
 
-  Serial.println("");
+ // Serial.println("");
   delay(100);
   
 
