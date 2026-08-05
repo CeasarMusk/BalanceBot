@@ -1,0 +1,4 @@
+#pragma once
+
+#define SSID "WIFI NAME HERE"
+#define WIFI_PASSWORD "SERIOUSLY THIS IS JUST THE PASSWORD"

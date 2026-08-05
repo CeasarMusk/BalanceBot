@@ -6,6 +6,9 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
+//Please remember to change the Macros in this file
+#include <secrets.h>
+
 //trying to not end it all
 //Add ENV var's
 
@@ -32,13 +35,10 @@
 #define DUTYCYCLE 200
 
 
-// ╔══════════════════════════════════════════════════════════╗
-// ║                  OTA Maybe?                              ║
-// ╚══════════════════════════════════════════════════════════╝
-#define ssid 
-
 
 Adafruit_MPU6050 mpu;
+AsyncWebServer server(80);
+
 void setup(void) {
 // ╔══════════════════════════════════════════════════════════╗
 // ║                  Init Pins                               ║
@@ -55,7 +55,33 @@ void setup(void) {
   Serial.begin(115200);
   while (!Serial)
     delay(10); // will pause Zero, Leonardo, etc until serial console opens
+  delay(2500); // This is needed during Programming phase, the serial connection will output tons of garbage without it
 
+// ╔══════════════════════════════════════════════════════════╗
+// ║                  OTA Maybe?                              ║
+// ╚══════════════════════════════════════════════════════════╝
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(SSID,WIFI_PASSWORD);
+  Serial.printf("Testing WiFi\n");
+
+  while(WiFi.status() != WL_CONNECTED){
+    delay(500);
+    Serial.printf(".");
+  }
+  Serial.printf("Connected to %s \n IP Address: %s", SSID,WiFi.localIP().toString().c_str());
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Hi! I am ESP32.");
+  });
+
+  server.begin();
+  Serial.println("HTTP server started");
+
+  ElegantOTA.begin(&server);    // Start ElegantOTA
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║                  MPU Init                                ║
+// ╚══════════════════════════════════════════════════════════╝
   Serial.println("Adafruit MPU6050 test!");
 
   // Try to initialize!
@@ -68,63 +94,9 @@ void setup(void) {
   Serial.println("MPU6050 Found!");
 
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-  Serial.print("Accelerometer range set to: ");
-  switch (mpu.getAccelerometerRange()) {
-  case MPU6050_RANGE_2_G:
-    Serial.println("+-2G");
-    break;
-  case MPU6050_RANGE_4_G:
-    Serial.println("+-4G");
-    break;
-  case MPU6050_RANGE_8_G:
-    Serial.println("+-8G");
-    break;
-  case MPU6050_RANGE_16_G:
-    Serial.println("+-16G");
-    break;
-  }
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-  Serial.print("Gyro range set to: ");
-  switch (mpu.getGyroRange()) {
-  case MPU6050_RANGE_250_DEG:
-    Serial.println("+- 250 deg/s");
-    break;
-  case MPU6050_RANGE_500_DEG:
-    Serial.println("+- 500 deg/s");
-    break;
-  case MPU6050_RANGE_1000_DEG:
-    Serial.println("+- 1000 deg/s");
-    break;
-  case MPU6050_RANGE_2000_DEG:
-    Serial.println("+- 2000 deg/s");
-    break;
-  }
-
   mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
-  Serial.print("Filter bandwidth set to: ");
-  switch (mpu.getFilterBandwidth()) {
-  case MPU6050_BAND_260_HZ:
-    Serial.println("260 Hz");
-    break;
-  case MPU6050_BAND_184_HZ:
-    Serial.println("184 Hz");
-    break;
-  case MPU6050_BAND_94_HZ:
-    Serial.println("94 Hz");
-    break;
-  case MPU6050_BAND_44_HZ:
-    Serial.println("44 Hz");
-    break;
-  case MPU6050_BAND_21_HZ:
-    Serial.println("21 Hz");
-    break;
-  case MPU6050_BAND_10_HZ:
-    Serial.println("10 Hz");
-    break;
-  case MPU6050_BAND_5_HZ:
-    Serial.println("5 Hz");
-    break;
-  }
+
 
   Serial.println("");
   delay(100);
