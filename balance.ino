@@ -31,6 +31,7 @@
 // ╔══════════════════════════════════════════════════════════╗
 // ║                  Motor Shit                              ║
 // ╚══════════════════════════════════════════════════════════╝
+
 #define FREQ 20000
 #define PWMCHANNEL 0
 #define RESOLUTION 8 
@@ -42,7 +43,7 @@
 #define PMW2 32
 
 
-//Adafruit_MPU6050 mpu;
+Adafruit_MPU6050 mpu;
 AsyncWebServer server(80);
 
 void setup(void) {
@@ -54,13 +55,11 @@ void setup(void) {
   pinMode(PMW1,OUTPUT);
   pinMode(PMW2,OUTPUT);
   
-
   // Set these to low, I totally fried my first board because the pins were floating HIGH at startup
   digitalWrite(DIR1,LOW);
   digitalWrite(DIR2,LOW);
   digitalWrite(PMW1,LOW);
   digitalWrite(PMW2,LOW);
-
 
 
   Serial.begin(115200);
@@ -72,7 +71,6 @@ void setup(void) {
 // ╔══════════════════════════════════════════════════════════╗
 // ║                  OTA Maybe?                              ║
 // ╚══════════════════════════════════════════════════════════╝
-
   WiFi.mode(WIFI_STA);
   WiFi.begin(SSID,WIFI_PASSWORD);
   LOG_PRINTf("Testing WiFi\n");
@@ -81,6 +79,7 @@ void setup(void) {
     delay(500);
     LOG_PRINTf(".");
   }
+
   Serial.printf("\nConnected to %s\n IP Address: %s\n", SSID,WiFi.localIP().toString().c_str());
   WebSerial.printf("\nConnected to %s\n IP Address: %s\n", SSID,WiFi.localIP().toString().c_str());
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -97,27 +96,13 @@ void setup(void) {
 // ╔══════════════════════════════════════════════════════════╗
 // ║                  MPU Init                                ║
 // ╚══════════════════════════════════════════════════════════╝
-  LOG_PRINTLN("Adafruit MPU6050 test!");
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
+  
 
-  // Try to initialize!
- // if (!mpu.begin()) {
- //   LOG_PRINTLN("Failed to find MPU6050 chip");
- //   while (1) {
- //     delay(10);
- //   }
- // }
- // LOG_PRINTLN("MPU6050 Found!");
-
- // mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
- // mpu.setGyroRange(MPU6050_RANGE_500_DEG);
- // mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
-
-
- // LOG_PRINTLN("");
-  delay(100);
-
-
-  delay(1000);
+  ledcAttachChannel(DIR1,FREQ,RESOLUTION,PWMCHANNEL);
+  ledcAttachChannel(DIR2,FREQ,RESOLUTION,PWMCHANNEL);
 
 }
 
@@ -125,16 +110,20 @@ void setup(void) {
 void loop() {
   
   ElegantOTA.loop();
-  LOG_PRINTf("Everything was Sucessful!3\n");
-  //sensors_event_t a, g, temp;
-  //mpu.getEvent(&a, &g, &temp);
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
   
-  delay(5000);
-   
-  digitalWrite(PMW1,HIGH);
-  digitalWrite(DIR1,HIGH);
+  /* LOGIC TABLE
+   *
+   *  PWM | DIR | OUTPUT
+   *   0  |  0  |   X
+   *   0  |  1  |   X
+   *   1  |  0  |   B
+   *   1  |  1  |   F
+   * 
+   * */ 
 
-
+  
 
 
   //First time programming esp32!! Not deleting this, its baller 
