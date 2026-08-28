@@ -96,9 +96,16 @@ void setup(void) {
 // ╔══════════════════════════════════════════════════════════╗
 // ║                  MPU Init                                ║
 // ╚══════════════════════════════════════════════════════════╝
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1) {
+      delay(10);
+    }
+  }
+  Serial.println("MPU Found");
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-  mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
+  mpu.setFilterBandwidth(MPU6050_BAND_44_HZ);
   
 
   ledcAttachChannel(DIR1,FREQ,RESOLUTION,PWMCHANNEL);
@@ -106,6 +113,9 @@ void setup(void) {
 
 }
 
+float angle = 0.00f;
+unsigned long prevTime=0;
+int elapsedTime;
 
 void loop() {
   
@@ -113,6 +123,25 @@ void loop() {
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
   
+  Serial.print("\033[2J\033[H");
+  // General Comp Filter, will organize code later
+  
+  
+  unsigned long curTime=micros();
+  float dt = (curTime - prevTime)/1000000.0f;
+  prevTime = curTime;
+
+  
+  float gyroRate= g.gyro.x * 180.0f/PI;
+  float accelAngle = atan2(a.acceleration.y,a.acceleration.z) * (180.0f/PI);
+
+  //Actual Filter
+  angle = 0.98f * (angle+(gyroRate*dt)) +  0.02f * accelAngle;
+  Serial.printf("Gyro angle over dt: %f\nAccelAngle Current: %f\nFiltered angle: %f", gyroRate, accelAngle, angle);
+
+
+  delay(100);
+
   /* LOGIC TABLE
    *
    *  PWM | DIR | OUTPUT
