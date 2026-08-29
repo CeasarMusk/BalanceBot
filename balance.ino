@@ -111,14 +111,20 @@ void setup(void) {
 
   ledcAttachChannel(DIR1,FREQ,RESOLUTION,PWMCHANNEL);
   ledcAttachChannel(DIR2,FREQ,RESOLUTION,PWMCHANNEL);
-
+  prevTime=micros();
 }
 
 float angle = 0.00f;
-unsigned long prevTime=0;
+unsigned long prevTime= 0;
 int elapsedTime;
-float gyroCalibrated=0.0f;
-float accelCalibrated=0.0f;
+float gyroCalibrated  = 0.0f;
+float accelCalibrated = 0.0f;
+float targetAngle     = 0.0f; // This needs to be played with to find where the bot actually balances
+float error           = 0.0f;
+float Kp              = 1.0f;
+float Ki              = 0.0f;
+float Kd              = 1.0f;
+float output          = 0.0f;
 
 void calibrateGyro(){
   sensors_event_t a,g,temp;
@@ -159,8 +165,6 @@ void calibrateAccelAngle() {
 void loop() {
   
   ElegantOTA.loop();
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
   
   Serial.print("\033[2J\033[H");
   // General Comp Filter, will organize code later
@@ -169,6 +173,10 @@ void loop() {
   unsigned long curTime=micros();
 
   if(curTime - prevTime >= 4000){ //250Hz
+    sensors_event_t a, g, temp;
+
+    mpu.getEvent(&a, &g, &temp);
+
     float dt = (curTime - prevTime)/1000000.0f;
     prevTime = curTime;
 
@@ -177,12 +185,17 @@ void loop() {
     float accelAngle = (atan2(a.acceleration.y,a.acceleration.z) * (180.0f/PI)) - accelCalibrated;
 
     //Actual Filter
+    
     angle = 0.98f * (angle+(gyroRate*dt)) +  0.02f * accelAngle;
-    Serial.printf("Gyro angle over dt: %f\nAccelAngle Current: %f\nFiltered angle: %f", gyroRate, accelAngle, angle);
+    error=targetAngle-angle;
+    
 
+    
+    Serial.printf("Gyro angle over dt: %f\nAccelAngle Current: %f\nFiltered angle: %f\nError: %f", gyroRate, accelAngle, angle, error);
+    output=(Kp*error)+(Kd*-(gyroRate));
   }
 
-
+  
 
   /* LOGIC TABLE
    *
