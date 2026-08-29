@@ -106,7 +106,8 @@ void setup(void) {
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_44_HZ);
-  
+  calibrateGyro();
+  calibrateAccelAngle();
 
   ledcAttachChannel(DIR1,FREQ,RESOLUTION,PWMCHANNEL);
   ledcAttachChannel(DIR2,FREQ,RESOLUTION,PWMCHANNEL);
@@ -116,6 +117,44 @@ void setup(void) {
 float angle = 0.00f;
 unsigned long prevTime=0;
 int elapsedTime;
+float gyroCalibrated=0.0f;
+float accelCalibrated=0.0f;
+
+void calibrateGyro(){
+  sensors_event_t a,g,temp;
+  
+  int samples = 500;
+  for(int i = 0; i < samples;i++){
+    mpu.getEvent(&a,&g,&temp);
+    gyroCalibrated+=g.gyro.x;
+    delay(2);
+  }
+
+  gyroCalibrated=gyroCalibrated/samples;
+}
+
+void calibrateAccelAngle() {
+    sensors_event_t a, g, temp;
+
+    accelCalibrated = 0.0f;
+
+    int samples = 500;
+
+    for (int i = 0; i < samples; i++) {
+        mpu.getEvent(&a, &g, &temp);
+
+        float accelAngle =
+            atan2(a.acceleration.y, a.acceleration.z) * 180.0f / PI;
+
+        accelCalibrated += accelAngle;
+
+        delay(2);
+    }
+
+    accelCalibrated /= samples;
+}
+
+
 
 void loop() {
   
@@ -128,19 +167,22 @@ void loop() {
   
   
   unsigned long curTime=micros();
-  float dt = (curTime - prevTime)/1000000.0f;
-  prevTime = curTime;
+
+  if(curTime - prevTime >= 4000){ //250Hz
+    float dt = (curTime - prevTime)/1000000.0f;
+    prevTime = curTime;
 
   
-  float gyroRate= g.gyro.x * 180.0f/PI;
-  float accelAngle = atan2(a.acceleration.y,a.acceleration.z) * (180.0f/PI);
+    float gyroRate= (g.gyro.x - gyroCalibrated) * 180.0f/PI;
+    float accelAngle = (atan2(a.acceleration.y,a.acceleration.z) * (180.0f/PI)) - accelCalibrated;
 
-  //Actual Filter
-  angle = 0.98f * (angle+(gyroRate*dt)) +  0.02f * accelAngle;
-  Serial.printf("Gyro angle over dt: %f\nAccelAngle Current: %f\nFiltered angle: %f", gyroRate, accelAngle, angle);
+    //Actual Filter
+    angle = 0.98f * (angle+(gyroRate*dt)) +  0.02f * accelAngle;
+    Serial.printf("Gyro angle over dt: %f\nAccelAngle Current: %f\nFiltered angle: %f", gyroRate, accelAngle, angle);
+
+  }
 
 
-  delay(100);
 
   /* LOGIC TABLE
    *
