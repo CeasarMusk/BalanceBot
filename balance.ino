@@ -33,7 +33,8 @@
 // ╚══════════════════════════════════════════════════════════╝
 
 #define FREQ 20000
-#define PWMCHANNEL 0
+#define PWMCHANNEL0 0
+#define PWMCHANNEL1 1
 #define RESOLUTION 8 
 #define DUTYCYCLE 220
 
@@ -45,6 +46,8 @@
 
 Adafruit_MPU6050 mpu;
 AsyncWebServer server(80);
+
+unsigned long prevTime= 0;
 
 void setup(void) {
 // ╔══════════════════════════════════════════════════════════╗
@@ -109,19 +112,18 @@ void setup(void) {
   calibrateGyro();
   calibrateAccelAngle();
 
-  ledcAttachChannel(DIR1,FREQ,RESOLUTION,PWMCHANNEL);
-  ledcAttachChannel(DIR2,FREQ,RESOLUTION,PWMCHANNEL);
+  ledcAttachChannel(PMW1,FREQ,RESOLUTION,PWMCHANNEL0);
+  ledcAttachChannel(PMW2,FREQ,RESOLUTION,PWMCHANNEL1);
   prevTime=micros();
 }
 
 float angle = 0.00f;
-unsigned long prevTime= 0;
 int elapsedTime;
 float gyroCalibrated  = 0.0f;
 float accelCalibrated = 0.0f;
 float targetAngle     = 0.0f; // This needs to be played with to find where the bot actually balances
 float error           = 0.0f;
-float Kp              = 1.0f;
+float Kp              = 5.0f;
 float Ki              = 0.0f;
 float Kd              = 1.0f;
 float output          = 0.0f;
@@ -166,7 +168,7 @@ void loop() {
   
   ElegantOTA.loop();
   
-  Serial.print("\033[2J\033[H");
+  //Serial.print("\033[2J\033[H");
   // General Comp Filter, will organize code later
   
   
@@ -189,10 +191,30 @@ void loop() {
     angle = 0.98f * (angle+(gyroRate*dt)) +  0.02f * accelAngle;
     error=targetAngle-angle;
     
+    // Emergency Stop
+    if(angle > 50 || angle < -50){
+      esp_deep_sleep_start();
+    }
 
-    
-    Serial.printf("Gyro angle over dt: %f\nAccelAngle Current: %f\nFiltered angle: %f\nError: %f", gyroRate, accelAngle, angle, error);
     output=(Kp*error)+(Kd*-(gyroRate));
+    
+    output = constrain(output, -255.0f, 255.0f);
+    Serial.printf("Gyro angle over dt: %f\nAccelAngle Current: %f\nFiltered angle: %f\nError: %f\nOutput: %f \n", gyroRate, accelAngle, angle, error, output);
+    
+    
+
+    if( output >=0 ){
+      digitalWrite(DIR1,LOW);
+      digitalWrite(DIR2,LOW);
+      Serial.printf("LETS START MOVING\n\n");
+    } else {
+      digitalWrite(DIR1,HIGH);
+      digitalWrite(DIR2,HIGH);
+    } 
+    int dutyCyle=abs((int)output);
+    ledcWrite(PMW1,dutyCyle);
+    ledcWrite(PMW2, dutyCyle);
+
   }
 
   
