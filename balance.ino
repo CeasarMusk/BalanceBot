@@ -9,6 +9,8 @@
 
 //Please remember to change the Macros in this file
 #include <secrets.h>
+//Holy fuck turn the wifi off when setting to 250Hz i stg it burned my first esp32 
+
 
 //trying to not end it all
 
