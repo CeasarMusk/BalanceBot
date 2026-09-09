@@ -57,6 +57,7 @@ void setup(void) {
   pinMode(DIR2,OUTPUT);
   pinMode(PMW1,OUTPUT);
   pinMode(PMW2,OUTPUT);
+  pinMode(2,OUTPUT);
   
   // Set these to low, I totally fried my first board because the pins were floating HIGH at startup
   digitalWrite(DIR1,LOW);
@@ -74,26 +75,26 @@ void setup(void) {
 // ╔══════════════════════════════════════════════════════════╗
 // ║                  OTA Maybe?                              ║
 // ╚══════════════════════════════════════════════════════════╝
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(SSID,WIFI_PASSWORD);
-  LOG_PRINTf("Testing WiFi\n");
+  //WiFi.mode(WIFI_STA);
+  //WiFi.begin(SSID,WIFI_PASSWORD);
+  //LOG_PRINTf("Testing WiFi\n");
 
-  while(WiFi.status() != WL_CONNECTED){
-    delay(500);
-    LOG_PRINTf(".");
-  }
+  //while(WiFi.status() != WL_CONNECTED){
+  //  delay(500);
+   // LOG_PRINTf(".");
+  //}
 
   Serial.printf("\nConnected to %s\n IP Address: %s\n", SSID,WiFi.localIP().toString().c_str());
-  WebSerial.printf("\nConnected to %s\n IP Address: %s\n", SSID,WiFi.localIP().toString().c_str());
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", "Hi! I am ESP32.");
-  });
+  //WebSerial.printf("\nConnected to %s\n IP Address: %s\n", SSID,WiFi.localIP().toString().c_str());
+  //server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+  //  request->send(200, "text/plain", "Hi! I am ESP32.");
+  //});
 
-  server.begin();
+  //server.begin();
   LOG_PRINTLN("HTTP server started");
 
-  ElegantOTA.begin(&server);    // Start ElegantOTA
-  WebSerial.begin(&server);
+  //ElegantOTA.begin(&server);    // Start ElegantOTA
+  //WebSerial.begin(&server);
   
 
 // ╔══════════════════════════════════════════════════════════╗
@@ -114,6 +115,10 @@ void setup(void) {
 
   ledcAttachChannel(PMW1,FREQ,RESOLUTION,PWMCHANNEL0);
   ledcAttachChannel(PMW2,FREQ,RESOLUTION,PWMCHANNEL1);
+  digitalWrite(2, HIGH);
+  delay(500);
+  digitalWrite(2, LOW);
+  delay(500);
   prevTime=micros();
 }
 
@@ -123,9 +128,12 @@ float gyroCalibrated  = 0.0f;
 float accelCalibrated = 0.0f;
 float targetAngle     = 0.0f; // This needs to be played with to find where the bot actually balances
 float error           = 0.0f;
-float Kp              = 5.0f;
+float Kp              = 16.3f;
 float Ki              = 0.0f;
-float Kd              = 1.0f;
+float Kd              = 0.05f;
+float motorBCorrection= 1.05f;
+float motorBOffset    = 5.0f;
+
 float output          = 0.0f;
 
 void calibrateGyro(){
@@ -166,7 +174,7 @@ void calibrateAccelAngle() {
 
 void loop() {
   
-  ElegantOTA.loop();
+  //ElegantOTA.loop();
   
   //Serial.print("\033[2J\033[H");
   // General Comp Filter, will organize code later
@@ -199,22 +207,21 @@ void loop() {
     output=(Kp*error)+(Kd*-(gyroRate));
     
     output = constrain(output, -255.0f, 255.0f);
-    Serial.printf("Gyro angle over dt: %f\nAccelAngle Current: %f\nFiltered angle: %f\nError: %f\nOutput: %f \n", gyroRate, accelAngle, angle, error, output);
+    Serial.printf("Gyro angle over dt: %f\nAccelAngle Current: %f\nFiltered angle: %f\nError: %f\nOutput: %f \n\f", gyroRate, accelAngle, angle, error, output);
     
     
 
     if( output >=0 ){
       digitalWrite(DIR1,LOW);
       digitalWrite(DIR2,LOW);
-      Serial.printf("LETS START MOVING\n\n");
     } else {
       digitalWrite(DIR1,HIGH);
       digitalWrite(DIR2,HIGH);
     } 
     int dutyCyle=abs((int)output);
-    ledcWrite(PMW1,dutyCyle);
+    ledcWrite(PMW1, constrain((dutyCyle*motorBCorrection),0,255.0f)+motorBOffset);
     ledcWrite(PMW2, dutyCyle);
-
+    
   }
 
   
